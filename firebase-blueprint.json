@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "NewsArticle": {
+      "title": "News Article",
+      "description": "A news article published in the portal.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "featuredImage": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "views": { "type": "number" },
+        "authorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "slug", "category", "content", "excerpt", "featuredImage", "status", "authorId", "createdAt", "updatedAt"]
+    },
+    "SiteSettings": {
+      "title": "Site Settings",
+      "description": "Global settings for the news portal.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "accentColor": { "type": "string" }
+      },
+      "required": ["siteName"]
+    }
+  },
+  "firestore": {
+    "news": {
+      "schema": "NewsArticle",
+      "description": "Collection of all news articles."
+    },
+    "settings/global": {
+      "schema": "SiteSettings",
+      "description": "Global configuration document."
+    }
+  }
+}

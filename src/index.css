@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "react-quill-new/dist/quill.snow.css";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --color-primary: #0A2A43;
+  --color-secondary: #1E90FF;
+  --color-accent: #E63946;
+  --color-neutral: #F1F5F9;
+  --color-brand: #E63946;
+  --color-admin-bg: #0A2A43;
+  --color-content-bg: #FFFFFF;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-[#0A2A43] antialiased font-sans;
+  }
+}
+
+/* Custom Quill styles for Dark Mode CMS */
+.ql-toolbar.ql-snow {
+  border-color: #333 !important;
+  background: #1e1e1e !important;
+}
+.ql-container.ql-snow {
+  border-color: #333 !important;
+  background: #141414 !important;
+  color: white !important;
+  font-family: inherit !important;
+}
+.ql-editor {
+  min-height: 400px;
+  font-size: 16px;
+}
+.ql-stroke {
+  stroke: #999 !important;
+}
+.ql-fill {
+  fill: #999 !important;
+}
+.ql-picker {
+  color: #999 !important;
+}
+
+/* Loading Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, #1e1e1e 25%, #252525 50%, #1e1e1e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
