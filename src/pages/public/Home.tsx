@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { aiSearchExpansion } from '../../services/geminiService';
+
 export default function Home() {
   const [searchParams] = useSearchParams();
   const category = searchParams.get('category');
@@ -23,6 +25,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [featured, setFeatured] = useState<NewsArticle | null>(null);
+  const [searchTerms, setSearchTerms] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchNews() {
@@ -43,9 +46,23 @@ export default function Home() {
         
         let filtered = all;
         if (searchQuery) {
+          // AI Search Expansion
+          let queryTerms = [searchQuery.toLowerCase()];
+          try {
+            const extraTerms = await aiSearchExpansion(searchQuery);
+            queryTerms = [...new Set([...queryTerms, ...extraTerms.map(t => t.toLowerCase())])];
+            setSearchTerms(queryTerms);
+          } catch (e) {
+            console.warn("AI Search fallback to basic");
+          }
+
           filtered = all.filter(a => 
-            a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            a.content.toLowerCase().includes(searchQuery.toLowerCase())
+            queryTerms.some(term => 
+              a.title.toLowerCase().includes(term) ||
+              a.content.toLowerCase().includes(term) ||
+              a.excerpt.toLowerCase().includes(term) ||
+              a.tags?.some(tag => tag.toLowerCase().includes(term))
+            )
           );
         }
 

@@ -21,16 +21,23 @@ import {
   Loader2, 
   Send,
   Eye,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateImageVariants, isValidImageFormat } from '../../lib/imageUtils';
+import { generateAIExtras, aiGenerateDraft } from '../../services/geminiService';
+import confetti from 'canvas-confetti';
 
 export default function AddNews() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
+  const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiDraftPrompt, setAiDraftPrompt] = useState('');
+  const [showAiModal, setShowAiModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -41,11 +48,63 @@ export default function AddNews() {
     featuredImage: '',
     featuredImageThumb: '',
     featuredImageMedium: '',
-    excerpt: ''
+    excerpt: '',
+    tags: [] as string[]
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [altTextSuggestion, setAltTextSuggestion] = useState('');
+
+  const handleAIDraft = async () => {
+    if (!aiDraftPrompt) return;
+    setAiProcessing(true);
+    try {
+      const draft = await aiGenerateDraft(aiDraftPrompt);
+      setFormData(prev => ({
+        ...prev,
+        title: draft.title || prev.title,
+        content: draft.content || prev.content,
+        excerpt: draft.excerpt || prev.excerpt,
+        category: draft.category || prev.category
+      }));
+      setShowAiModal(false);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#1E90FF', '#00B894', '#0A2A43']
+      });
+      toast.success('AI Journalist Draft Generated');
+    } catch (e) {
+      toast.error('AI Draft frequency failed');
+    } finally {
+      setAiProcessing(false);
+    }
+  };
+
+  const handleAIEnhance = async () => {
+    if (!formData.title || !formData.content) {
+      toast.error('Title and Content required for AI analysis');
+      return;
+    }
+
+    setAiProcessing(true);
+    try {
+      const aiData = await generateAIExtras(formData.title, formData.content);
+      setFormData(prev => ({
+        ...prev,
+        excerpt: aiData.excerpt || prev.excerpt,
+        category: aiData.category || prev.category,
+      }));
+      setAltTextSuggestion(aiData.altText || '');
+      toast.success('AI Data Synthesis Complete');
+    } catch (error) {
+      toast.error('AI Processing encountered a frequency error');
+    } finally {
+      setAiProcessing(false);
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -174,6 +233,29 @@ export default function AddNews() {
         </div>
         <div className="flex gap-4">
           <button
+            onClick={() => setShowAiModal(true)}
+            disabled={loading}
+            className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-[#0A2A43] text-white hover:bg-[#1E90FF] transition-all text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95"
+          >
+            <Zap className="w-4 h-4 text-[#00B894]" /> Write with AI
+          </button>
+          <button
+            onClick={handleAIEnhance}
+            disabled={aiProcessing || loading}
+            className={`flex items-center gap-3 px-8 py-4 rounded-2xl transition-all text-xs font-black uppercase tracking-widest shadow-xl active:scale-95 group ${
+              aiProcessing 
+                ? 'bg-[#1E90FF]/10 text-[#1E90FF]' 
+                : 'bg-gradient-to-r from-[#1E90FF] to-[#00B894] text-white'
+            }`}
+          >
+            {aiProcessing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Sparkles className="w-5 h-5 group-hover:animate-pulse" />
+            )}
+            AI Assistant
+          </button>
+          <button
             onClick={(e) => handleSubmit(e, 'draft')}
             disabled={loading}
             className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-[#F1F5F9] text-[#0A2A43] hover:bg-[#E2E8F0] transition-all text-xs font-black uppercase tracking-widest shadow-sm active:scale-95"
@@ -300,6 +382,15 @@ export default function AddNews() {
                 className="hidden" 
                 accept="image/*"
               />
+              {altTextSuggestion && (
+                <div className="mt-4 p-4 bg-[#1E90FF]/5 rounded-xl border border-[#1E90FF]/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-[#1E90FF]" />
+                    <span className="text-[9px] font-black uppercase text-[#1E90FF] tracking-widest">AI SEO Alt Text</span>
+                  </div>
+                  <p className="text-[11px] font-medium text-[#0A2A43] leading-relaxed italic">{altTextSuggestion}</p>
+                </div>
+              )}
               {imagePreview && (
                 <button 
                   onClick={() => { setImagePreview(null); setFormData(prev => ({ ...prev, featuredImage: '' })); }}
@@ -327,6 +418,57 @@ export default function AddNews() {
           </div>
         </div>
       </div>
+
+      {/* AI Draft Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-[#0A2A43]/80 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl"
+          >
+            <div className="p-10 space-y-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-2xl font-black text-[#0A2A43] uppercase tracking-tighter">AI Editorial Draft</h3>
+                  <p className="text-[10px] font-black uppercase text-[#1E90FF] tracking-widest mt-1">Direct Neural Dispatch</p>
+                </div>
+                <button onClick={() => setShowAiModal(false)} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                  <X className="w-5 h-5 text-[#0A2A43]" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 tracking-widest px-1">Describe the story in 1 sentence</label>
+                <textarea
+                  value={aiDraftPrompt}
+                  onChange={(e) => setAiDraftPrompt(e.target.value)}
+                  placeholder="e.g. A new luxury hotel opening in Cox's Bazar near Kola Toli beach with sustainable features..."
+                  className="w-full bg-[#F1F5F9] border-2 border-transparent rounded-2xl p-6 text-sm font-bold text-[#0A2A43] focus:border-[#1E90FF] focus:bg-white focus:outline-none transition-all h-32 resize-none shadow-inner"
+                />
+              </div>
+
+              <div className="flex items-center gap-4 bg-[#1E90FF]/5 p-5 rounded-2xl border border-[#1E90FF]/10">
+                <div className="w-10 h-10 rounded-full bg-[#1E90FF] flex items-center justify-center shadow-lg shadow-[#1E90FF]/20">
+                   <Zap className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-[11px] font-bold text-[#0A2A43]/60 leading-relaxed">
+                  Our AI will synthesize a complete journalistic report including headline, content, and categories optimized for global reach.
+                </p>
+              </div>
+
+              <button
+                onClick={handleAIDraft}
+                disabled={aiProcessing || !aiDraftPrompt}
+                className="w-full bg-[#0A2A43] text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl hover:bg-[#1E90FF] transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+              >
+                {aiProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                Initiate Generation
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

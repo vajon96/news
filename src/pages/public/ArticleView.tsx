@@ -18,10 +18,13 @@ import {
   User,
   ArrowRight,
   Newspaper,
-  Loader2
+  Loader2,
+  Zap,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
+import { translateContent } from '../../services/geminiService';
 
 export default function ArticleView() {
   const { slug } = useParams();
@@ -29,6 +32,38 @@ export default function ArticleView() {
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsArticle[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+
+  const handleTranslate = async (lang: string) => {
+    if (!article) return;
+    setTranslating(true);
+    try {
+      const result = await translateContent(article.content, lang);
+      setTranslatedContent(result);
+      toast.success(`Broadcasting in ${lang}`);
+    } catch (e) {
+      toast.error('Translation network failure');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const handleAiSummary = async () => {
+    if (!article) return;
+    setGeneratingSummary(true);
+    try {
+      const result = await translateContent(article.content, "English (Concise Bullet Points Summary)");
+      setSummary(result);
+      toast.success('AI Briefing Ready');
+    } catch (e) {
+      toast.error('Briefing generation error');
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
 
   useEffect(() => {
     if (!slug) return;
@@ -144,18 +179,69 @@ export default function ArticleView() {
 
       {/* Header */}
       <header className="space-y-8">
-        <div className="flex flex-wrap items-center gap-6">
-          <span className="bg-[#0A2A43] text-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl rounded-md border border-white/10">
-            {article.category}
-          </span>
-          <div className="flex items-center gap-6 text-[10px] font-black text-[#0A2A43]/40 uppercase tracking-widest">
-             <span className="flex items-center gap-2 lg:bg-[#F1F5F9] lg:px-4 lg:py-2 lg:rounded-full"><Calendar className="w-4 h-4 text-[#1E90FF]" /> {formatDate(article.createdAt?.toDate())}</span>
-             <span className="flex items-center gap-2 lg:bg-[#F1F5F9] lg:px-4 lg:py-2 lg:rounded-full"><Eye className="w-4 h-4 text-[#1E90FF]" /> {article.views || 0} READS</span>
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            <span className="bg-[#0A2A43] text-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] shadow-xl rounded-md border border-white/10">
+              {article.category}
+            </span>
+            <div className="flex items-center gap-6 text-[10px] font-black text-[#0A2A43]/40 uppercase tracking-widest">
+               <span className="flex items-center gap-2 lg:bg-[#F1F5F9] lg:px-4 lg:py-2 lg:rounded-full"><Calendar className="w-4 h-4 text-[#1E90FF]" /> {formatDate(article.createdAt?.toDate())}</span>
+               <span className="flex items-center gap-2 lg:bg-[#F1F5F9] lg:px-4 lg:py-2 lg:rounded-full"><Eye className="w-4 h-4 text-[#1E90FF]" /> {article.views || 0} READS</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+             <button 
+               onClick={handleAiSummary}
+               disabled={generatingSummary}
+               className="flex items-center gap-2 bg-[#0A2A43] text-white px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[#1E90FF] transition-all shadow-lg shadow-[#0A2A43]/10"
+             >
+               {generatingSummary ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3 text-[#00B894]" />}
+               AI Briefing
+             </button>
+             <div className="relative group/translate">
+                <button className="flex items-center gap-2 bg-white border border-gray-100 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-[#0A2A43] hover:border-[#1E90FF] transition-all shadow-sm">
+                  {translating ? <Loader2 className="w-3 h-3 animate-spin text-[#1E90FF]" /> : <Globe className="w-3 h-3 text-[#1E90FF]" />}
+                  Translate
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover/translate:opacity-100 group-hover/translate:visible transition-all z-50 p-2 space-y-1">
+                   {['Bengali', 'Urdu', 'Hindi', 'Arabic', 'Chinese'].map(lang => (
+                     <button 
+                        key={lang}
+                        onClick={() => handleTranslate(lang)}
+                        className="w-full text-left px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-[#0A2A43] hover:bg-[#1E90FF]/5 hover:text-[#1E90FF] rounded-xl transition-colors"
+                     >
+                        {lang}
+                     </button>
+                   ))}
+                   {translatedContent && (
+                     <button 
+                        onClick={() => setTranslatedContent(null)}
+                        className="w-full text-center mt-2 pt-2 border-t border-gray-50 text-[8px] font-black text-[#E63946] uppercase"
+                     >
+                        Reset Language
+                     </button>
+                   )}
+                </div>
+             </div>
           </div>
         </div>
         <h1 className="text-4xl lg:text-7xl font-black leading-[0.95] tracking-tighter uppercase text-[#0A2A43]">
           {article.title}
         </h1>
+        {summary && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="bg-[#1E90FF]/5 border-l-[12px] border-[#00B894] p-8 rounded-r-3xl space-y-4"
+          >
+            <p className="text-[10px] font-black uppercase text-[#1E90FF] tracking-[0.3em]">AI Executive Briefing</p>
+            <div className="text-sm font-bold text-[#0A2A43] leading-relaxed whitespace-pre-line">
+              {summary}
+            </div>
+            <button onClick={() => setSummary(null)} className="text-[8px] font-black uppercase text-[#0A2A43]/30 hover:text-[#E63946]">Dismiss Briefing</button>
+          </motion.div>
+        )}
         <p className="text-xl lg:text-3xl text-[#0A2A43]/70 font-bold leading-relaxed border-l-[12px] border-[#1E90FF] pl-8 py-3">
           {article.excerpt}
         </p>
@@ -208,7 +294,7 @@ export default function ArticleView() {
       <div className="bg-white p-8 lg:p-16 rounded-3xl shadow-sm border-2 border-gray-50">
         <article 
           className="prose prose-xl max-w-none prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase prose-headings:text-[#0A2A43] prose-p:leading-relaxed prose-p:text-[#0A2A43]/80 prose-p:font-medium prose-strong:text-[#0A2A43] prose-img:rounded-2xl"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: translatedContent || article.content }}
         />
       </div>
 

@@ -13,6 +13,8 @@ export interface NewsArticle {
   images: string[];
   status: NewsStatus;
   views: number;
+  tags?: string[];
+  scheduledAt?: any;
   authorId: string;
   createdAt: any; // Firestore Timestamp
   updatedAt: any; // Firestore Timestamp

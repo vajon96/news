@@ -11,20 +11,42 @@ import {
   Image as ImageIcon,
   Loader2,
   Share2,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Sparkles,
+  Newspaper
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { optimizeSocialHeadlines } from '../../services/geminiService';
 
 export default function SocialPostGenerator() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [customHeadline, setCustomHeadline] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [bgColor, setBgColor] = useState('#0A2A43');
   const [templateId, setTemplateId] = useState('modern');
   const [generating, setGenerating] = useState(false);
-  
+  const [aiLoading, setAiLoading] = useState(false);
+
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleAISuggest = async () => {
+    if (!customHeadline) {
+      toast.error('Enter a base headline first');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const suggestions = await optimizeSocialHeadlines(customHeadline);
+      setAiSuggestions(suggestions);
+      toast.success('AI Social Hooks Generated');
+    } catch (e) {
+      toast.error('AI Hook frequency failure');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -98,7 +120,17 @@ export default function SocialPostGenerator() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 mb-3 tracking-[0.2em]">Broadcast Headline</label>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 tracking-[0.2em]">Broadcast Headline</label>
+                <button 
+                  onClick={handleAISuggest}
+                  disabled={aiLoading || !customHeadline}
+                  className="flex items-center gap-2 text-[9px] font-black uppercase text-[#1E90FF] hover:bg-[#1E90FF]/5 px-3 py-1.5 rounded-lg border border-[#1E90FF]/20 transition-all shadow-sm"
+                >
+                  {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  AI Hooks
+                </button>
+              </div>
               <textarea
                 value={customHeadline}
                 onChange={(e) => setCustomHeadline(e.target.value)}
@@ -106,6 +138,23 @@ export default function SocialPostGenerator() {
                 className="w-full bg-[#F1F5F9] border-2 border-transparent rounded-2xl p-5 text-sm font-bold text-[#0A2A43] focus:border-[#1E90FF] focus:bg-white focus:outline-none resize-none shadow-inner transition-all placeholder:text-[#0A2A43]/20"
                 placeholder="Adjust headline for visual impact..."
               />
+              
+              {aiSuggestions.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-[8px] font-black uppercase text-[#0A2A43]/30 tracking-widest px-2">AI Suggested variants</p>
+                  <div className="flex flex-wrap gap-2">
+                    {aiSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCustomHeadline(s)}
+                        className="text-[10px] font-bold text-[#0A2A43]/70 bg-white border border-gray-100 px-4 py-2 rounded-xl hover:border-[#1E90FF] hover:text-[#1E90FF] transition-all text-left max-w-full truncate"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
