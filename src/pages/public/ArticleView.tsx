@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   Calendar,
   User,
-  ArrowRight
+  ArrowRight,
+  Newspaper
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -128,12 +129,20 @@ export default function ArticleView() {
       </header>
 
       {/* Featured Image */}
-      <figure className="relative rounded-3xl overflow-hidden shadow-3xl border-4 border-gray-50">
-         <img 
-           src={article.featuredImage} 
-           alt={article.title} 
-           className="w-full h-auto object-cover max-h-[700px] hover:scale-[1.02] transition-transform duration-1000"
-         />
+      <figure className="relative rounded-3xl overflow-hidden shadow-3xl border-4 border-gray-50 bg-[#F1F5F9]">
+         {article.featuredImage && article.featuredImage.trim() !== "" ? (
+           <img 
+             src={article.featuredImage} 
+             alt={article.title} 
+             loading="lazy"
+             className="w-full h-auto object-cover max-h-[700px] hover:scale-[1.02] transition-transform duration-1000"
+           />
+         ) : (
+           <div className="py-32 flex flex-col items-center justify-center space-y-6">
+              <Newspaper className="w-24 h-24 text-[#0A2A43]/10" />
+              <p className="text-[#0A2A43]/20 font-black uppercase tracking-[0.4em] text-xs leading-none">News Broadcast</p>
+           </div>
+         )}
          <div className="absolute top-8 right-8">
            <div className="w-14 h-14 bg-white/30 backdrop-blur-xl rounded-2xl flex items-center justify-center font-black italic text-white shadow-2xl border border-white/40">
              CBT
@@ -181,8 +190,19 @@ export default function ArticleView() {
              {related.slice(0, 4).map(rel => (
                 <motion.div key={rel.id} whileHover={{ y: -8 }} transition={{ duration: 0.3 }}>
                   <Link to={`/news/${rel.slug}`} className="group flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all border-2 border-gray-50 hover:border-[#1E90FF]/20 overflow-hidden h-full">
-                    <div className="aspect-[16/9] overflow-hidden">
-                       <img src={rel.featuredImage} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                    <div className="aspect-[16/9] overflow-hidden bg-[#F1F5F9]">
+                       {rel.featuredImage && rel.featuredImage.trim() !== "" ? (
+                         <img 
+                           src={rel.featuredImage} 
+                           alt="" 
+                           loading="lazy"
+                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                         />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center">
+                            <Newspaper className="w-10 h-10 text-[#0A2A43]/10" />
+                         </div>
+                       )}
                     </div>
                     <div className="p-8 space-y-4">
                        <p className="text-[10px] font-black text-[#1E90FF] uppercase tracking-[0.2em]">{rel.category}</p>

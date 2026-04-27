@@ -57,7 +57,12 @@ export default function MediaLibrary() {
         {images.map((img, i) => (
           <div key={i} className="group bg-white border-2 border-gray-50 rounded-[2rem] overflow-hidden flex flex-col shadow-sm hover:shadow-xl transition-all duration-500">
             <div className="aspect-square relative overflow-hidden bg-[#F1F5F9]">
-              <img src={img.url} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img 
+                src={img.url} 
+                alt="" 
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+              />
               <div className="absolute inset-0 bg-[#0A2A43]/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3 backdrop-blur-sm">
                 <button 
                   onClick={() => copyToClipboard(img.url)}

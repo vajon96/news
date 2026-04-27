@@ -20,9 +20,11 @@ import {
   X, 
   Loader2, 
   Send,
-  Eye
+  Eye,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { compressImage, isValidImageFormat } from '../../lib/imageUtils';
 
 export default function AddNews() {
   const { id } = useParams();
@@ -77,16 +79,22 @@ export default function AddNews() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!isValidImageFormat(file)) {
+      toast.error('Supported formats: JPG, PNG, WEBP');
+      return;
+    }
+
     setUploadProgress(true);
     try {
-      const storageRef = ref(storage, `news_images/${Date.now()}_${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
+      const compressedBlob = await compressImage(file);
+      const storageRef = ref(storage, `news_images/${Date.now()}_optimized.webp`);
+      const snapshot = await uploadBytes(storageRef, compressedBlob);
       const url = await getDownloadURL(snapshot.ref);
       setFormData(prev => ({ ...prev, featuredImage: url }));
       setImagePreview(url);
-      toast.success('Image uploaded successfully');
+      toast.success('Optimized asset ready');
     } catch (error) {
-      toast.error('Image upload failed');
+      toast.error('Image compression failed');
     } finally {
       setUploadProgress(false);
     }
@@ -241,7 +249,7 @@ export default function AddNews() {
                 onClick={() => fileInputRef.current?.click()}
                 className="aspect-video bg-[#F1F5F9] border-4 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#1E90FF] transition-all group overflow-hidden relative shadow-inner"
               >
-                {imagePreview ? (
+                {imagePreview && imagePreview.trim() !== "" ? (
                   <>
                     <img src={imagePreview} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-[#0A2A43]/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">

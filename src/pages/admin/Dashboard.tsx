@@ -156,11 +156,17 @@ export default function AdminDashboard() {
             <div className="bg-black/20 rounded-2xl overflow-hidden aspect-square border-2 border-white/5 flex flex-col relative group">
               {stats.recentPosts[0] && (
                 <>
-                  <img 
-                    src={stats.recentPosts[0].featuredImage} 
-                    alt="" 
-                    className="w-full h-full object-cover opacity-60"
-                  />
+                  {stats.recentPosts[0].featuredImage && stats.recentPosts[0].featuredImage.trim() !== "" ? (
+                    <img 
+                      src={stats.recentPosts[0].featuredImage} 
+                      alt="" 
+                      className="w-full h-full object-cover opacity-60"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-[#0A2A43]">
+                       <Newspaper className="w-12 h-12 text-white/10" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A2A43] via-[#0A2A43]/20 to-transparent flex flex-col justify-end p-6">
                     <span className="bg-[#E63946] text-white text-[9px] font-black px-3 py-1 rounded-md self-start mb-3 uppercase tracking-widest">
                       New Report

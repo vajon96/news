@@ -156,11 +156,13 @@ export default function SocialPostGenerator() {
               style={{ backgroundColor: bgColor }}
             >
               {/* Image Background */}
-              <div className="absolute inset-0 overflow-hidden">
-                {selectedArticle?.featuredImage ? (
+              <div className="absolute inset-0 overflow-hidden bg-[#F1F5F9]">
+                {selectedArticle?.featuredImage && selectedArticle.featuredImage.trim() !== "" ? (
                   <img src={selectedArticle.featuredImage} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 scale-105" crossOrigin="anonymous" />
                 ) : (
-                  <div className="w-full h-full bg-[#F1F5F9]" />
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-[#0A2A43]/10" />
+                  </div>
                 )}
                 {/* Gradient Overlays */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0A2A43] via-[#0A2A43]/60 to-transparent" />
@@ -169,7 +171,7 @@ export default function SocialPostGenerator() {
 
               {/* Header: Logo */}
               <div className="relative z-10 p-8 flex justify-between items-start">
-                {settings?.logoUrl ? (
+                {settings?.logoUrl && settings.logoUrl.trim() !== "" ? (
                   <img src={settings.logoUrl} alt="Logo" className="h-10 object-contain filter drop-shadow-2xl brightness-0 invert" crossOrigin="anonymous" />
                 ) : (
                   <span className="font-black text-white text-xl tracking-tighter uppercase leading-none">COXBAZAR<br/><span className="text-[#1E90FF]">TIMES</span></span>

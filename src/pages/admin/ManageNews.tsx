@@ -117,7 +117,12 @@ export default function ManageNews() {
                     <div className="flex items-center gap-6">
                       <div className="w-16 h-12 rounded-xl bg-[#F1F5F9] overflow-hidden shrink-0 border-2 border-gray-100 shadow-inner">
                         {article.featuredImage && (
-                          <img src={article.featuredImage} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                          <img 
+                            src={article.featuredImage} 
+                            alt="" 
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                          />
                         )}
                       </div>
                       <div className="max-w-xs xl:max-w-md">

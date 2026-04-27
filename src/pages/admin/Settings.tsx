@@ -13,6 +13,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { compressImage, isValidImageFormat } from '../../lib/imageUtils';
 
 export default function Settings() {
   const [settings, setSettings] = useState<SiteSettings>({
@@ -59,15 +60,21 @@ export default function Settings() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (!isValidImageFormat(file)) {
+      toast.error('Please use JPG, PNG, or WEBP');
+      return;
+    }
+
     setUploading(true);
     try {
-      const storageRef = ref(storage, `site_assets/logo_${Date.now()}`);
-      const snapshot = await uploadBytes(storageRef, file);
+      const compressedBlob = await compressImage(file, 600); // Logo can be smaller
+      const storageRef = ref(storage, `site_assets/logo_${Date.now()}.webp`);
+      const snapshot = await uploadBytes(storageRef, compressedBlob);
       const url = await getDownloadURL(snapshot.ref);
       setSettings({ ...settings, logoUrl: url });
-      toast.success('Logo uploaded');
+      toast.success('Branding asset optimized');
     } catch (error) {
-      toast.error('Logo upload failed');
+      toast.error('Logo processing failed');
     } finally {
       setUploading(false);
     }
@@ -119,7 +126,7 @@ export default function Settings() {
               <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 tracking-widest">Network Mark (Logo)</label>
               <div className="flex flex-col md:flex-row items-center gap-10">
                 <div className="w-40 h-40 bg-[#F1F5F9] border-4 border-dashed border-gray-200 rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden group shadow-inner">
-                  {settings.logoUrl ? (
+                  {settings.logoUrl && settings.logoUrl.trim() !== "" ? (
                     <>
                       <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain p-6" />
                       <div className="absolute inset-0 bg-[#0A2A43]/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">

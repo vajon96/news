@@ -82,7 +82,7 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-4 group shrink-0">
-            {settings?.logoUrl ? (
+            {settings?.logoUrl && settings.logoUrl.trim() !== "" ? (
               <img src={settings.logoUrl} alt={settings.siteName} className="h-10 lg:h-14 w-auto object-contain" />
             ) : (
               <div className="flex flex-col">

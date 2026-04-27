@@ -13,13 +13,13 @@ service cloud.firestore {
     }
 
     function isEmailVerified() {
-      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email == 'admin_news@globalnews.com');
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email == 'admin@coxbazartimes.com');
     }
 
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || 
-        request.auth.token.email == 'admin_news@globalnews.com'
+        request.auth.token.email == 'admin@coxbazartimes.com'
       );
     }
 
@@ -62,7 +62,7 @@ service cloud.firestore {
 
     // 1. News Articles
     match /news/{articleId} {
-      allow get: if true;
+      allow get: if (resource.data.status == 'published') || isAdmin();
       allow list: if (resource.data.status == 'published') || isAdmin();
 
       allow create: if isEmailVerified() && isValidId(articleId) && isValidNewsArticle(incoming());

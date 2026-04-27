@@ -10,7 +10,8 @@ import {
   ArrowRight, 
   ChevronRight,
   Eye,
-  FilterX
+  FilterX,
+  Newspaper
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -90,12 +91,19 @@ export default function Home() {
       {/* Featured Section */}
       {featured && !searchQuery && (
         <section className="relative group">
-          <Link to={`/news/${featured.slug}`} className="block relative h-[450px] lg:h-[650px] overflow-hidden rounded-2xl shadow-3xl">
-            <img 
-              src={featured.featuredImage} 
-              alt={featured.title} 
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-            />
+          <Link to={`/news/${featured.slug}`} className="block relative h-[450px] lg:h-[650px] overflow-hidden rounded-2xl shadow-3xl bg-[#F1F5F9]">
+            {featured.featuredImage && featured.featuredImage.trim() !== "" ? (
+              <img 
+                src={featured.featuredImage} 
+                alt={featured.title} 
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                 <Newspaper className="w-20 h-20 text-[#0A2A43]/10" />
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#0A2A43] via-[#0A2A43]/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-8 lg:p-16 text-white">
                <motion.div 
@@ -146,12 +154,19 @@ export default function Home() {
               transition={{ delay: i * 0.05 }}
               className="group flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-50/50 hover:border-[#1E90FF]/20 overflow-hidden"
             >
-              <Link to={`/news/${article!.slug}`} className="aspect-[16/10] overflow-hidden relative block">
-                 <img 
-                   src={article!.featuredImage} 
-                   alt={article!.title} 
-                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                 />
+              <Link to={`/news/${article!.slug}`} className="aspect-[16/10] overflow-hidden relative block bg-[#F1F5F9]">
+                 {article!.featuredImage && article!.featuredImage.trim() !== "" ? (
+                   <img 
+                     src={article!.featuredImage} 
+                     alt={article!.title} 
+                     loading="lazy"
+                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                   />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center">
+                      <Newspaper className="w-12 h-12 text-[#0A2A43]/10" />
+                   </div>
+                 )}
                  <div className="absolute top-5 left-5 bg-[#0A2A43] text-white px-3 py-1 rounded shadow-xl text-[9px] font-black uppercase tracking-[0.2em] border border-white/10">
                    {article!.category}
                  </div>
