@@ -67,14 +67,25 @@ export default function Settings() {
 
     setUploading(true);
     try {
-      const compressedBlob = await compressImage(file, 600); // Logo can be smaller
-      const storageRef = ref(storage, `site_assets/logo_${Date.now()}.webp`);
-      const snapshot = await uploadBytes(storageRef, compressedBlob);
+      let finalData: Blob | File = file;
+      let filename = `site_assets/logo_${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+
+      try {
+        finalData = await compressImage(file, 600);
+        filename = `site_assets/logo_${Date.now()}.webp`;
+      } catch (err) {
+        console.warn('Logo compression failed, using original:', err);
+      }
+
+      const storageRef = ref(storage, filename);
+      const snapshot = await uploadBytes(storageRef, finalData);
       const url = await getDownloadURL(snapshot.ref);
       setSettings({ ...settings, logoUrl: url });
-      toast.success('Branding asset optimized');
+      toast.success('System branding updated');
     } catch (error) {
-      toast.error('Logo processing failed');
+      console.error('Logo sync error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Transmission failed';
+      toast.error(`Branding Error: ${errorMessage}`);
     } finally {
       setUploading(false);
     }

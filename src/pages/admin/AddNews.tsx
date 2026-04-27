@@ -24,7 +24,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { compressImage, isValidImageFormat } from '../../lib/imageUtils';
+import { generateImageVariants, isValidImageFormat } from '../../lib/imageUtils';
 
 export default function AddNews() {
   const { id } = useParams();
@@ -39,6 +39,8 @@ export default function AddNews() {
     content: '',
     status: 'draft' as NewsStatus,
     featuredImage: '',
+    featuredImageThumb: '',
+    featuredImageMedium: '',
     excerpt: ''
   });
 
@@ -60,6 +62,8 @@ export default function AddNews() {
               content: data.content,
               status: data.status,
               featuredImage: data.featuredImage,
+              featuredImageThumb: data.featuredImageThumb || '',
+              featuredImageMedium: data.featuredImageMedium || '',
               excerpt: data.excerpt || ''
             });
             setImagePreview(data.featuredImage);
@@ -86,15 +90,32 @@ export default function AddNews() {
 
     setUploadProgress(true);
     try {
-      const compressedBlob = await compressImage(file);
-      const storageRef = ref(storage, `news_images/${Date.now()}_optimized.webp`);
-      const snapshot = await uploadBytes(storageRef, compressedBlob);
-      const url = await getDownloadURL(snapshot.ref);
-      setFormData(prev => ({ ...prev, featuredImage: url }));
-      setImagePreview(url);
-      toast.success('Optimized asset ready');
+      const { thumbnail, medium, full } = await generateImageVariants(file);
+      const timestamp = Date.now();
+      
+      const uploadVariant = async (blob: Blob, name: string) => {
+        const storageRef = ref(storage, `news_images/${timestamp}_${name}.webp`);
+        const snapshot = await uploadBytes(storageRef, blob);
+        return getDownloadURL(snapshot.ref);
+      };
+
+      const [thumbUrl, medUrl, fullUrl] = await Promise.all([
+        uploadVariant(thumbnail, 'thumb'),
+        uploadVariant(medium, 'medium'),
+        uploadVariant(full, 'full')
+      ]);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        featuredImage: fullUrl,
+        featuredImageThumb: thumbUrl,
+        featuredImageMedium: medUrl
+      }));
+      setImagePreview(fullUrl);
+      toast.success('Optimized multi-variant assets synchronized');
     } catch (error) {
-      toast.error('Image compression failed');
+      console.error('Final upload error:', error);
+      toast.error(`Upload Error: Processing failed`);
     } finally {
       setUploadProgress(false);
     }

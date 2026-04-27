@@ -8,6 +8,8 @@ export interface NewsArticle {
   content: string;
   excerpt: string;
   featuredImage: string;
+  featuredImageThumb?: string;
+  featuredImageMedium?: string;
   images: string[];
   status: NewsStatus;
   views: number;

@@ -20,14 +20,15 @@ export default function SocialPostGenerator() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
   const [customHeadline, setCustomHeadline] = useState('');
-  const [bgColor, setBgColor] = useState('#0A2A43'); // Default Ocean Blue
+  const [bgColor, setBgColor] = useState('#0A2A43');
+  const [templateId, setTemplateId] = useState('modern');
   const [generating, setGenerating] = useState(false);
   
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchData() {
-      const q = query(collection(db, 'news'), orderBy('createdAt', 'desc'), limit(10));
+      const q = query(collection(db, 'news'), where('status', '==', 'published'), orderBy('createdAt', 'desc'), limit(15));
       const newsSnap = await getDocs(q);
       setArticles(newsSnap.docs.map(d => ({ ...d.data(), id: d.id } as NewsArticle)));
 
@@ -39,6 +40,12 @@ export default function SocialPostGenerator() {
     }
     fetchData();
   }, []);
+
+  const templates = [
+    { id: 'modern', name: 'Modern Clean', icon: Layout },
+    { id: 'dramatic', name: 'Dramatic Hero', icon: ImageIcon },
+    { id: 'editorial', name: 'Classic Editorial', icon: Newspaper }
+  ];
 
   useEffect(() => {
     if (selectedArticle) {
@@ -102,6 +109,22 @@ export default function SocialPostGenerator() {
             </div>
 
             <div>
+              <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 mb-4 tracking-[0.2em]">Select Template</label>
+              <div className="grid grid-cols-3 gap-4">
+                {templates.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTemplateId(t.id)}
+                    className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${templateId === t.id ? 'border-[#1E90FF] bg-[#1E90FF]/5 text-[#1E90FF]' : 'border-gray-100 bg-white text-gray-400'}`}
+                  >
+                    <t.icon className="w-6 h-6" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">{t.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <label className="block text-[10px] font-black uppercase text-[#0A2A43]/40 mb-4 tracking-[0.2em]">Theme Identity</label>
               <div className="flex gap-4">
                 {['#0A2A43', '#1E90FF', '#E63946', '#2D3436', '#00B894'].map(color => (
@@ -152,59 +175,70 @@ export default function SocialPostGenerator() {
             {/* The actual element to be grabbed */}
             <div 
               ref={cardRef}
-              className="w-[450px] h-[450px] bg-white relative overflow-hidden flex flex-col shadow-2xl rounded-2xl border-2 border-gray-50"
+              className={`w-[450px] h-[450px] relative overflow-hidden flex flex-col shadow-2xl rounded-2xl border-2 border-gray-50 transition-all duration-500`}
               style={{ backgroundColor: bgColor }}
             >
-              {/* Image Background */}
-              <div className="absolute inset-0 overflow-hidden bg-[#F1F5F9]">
-                {selectedArticle?.featuredImage && selectedArticle.featuredImage.trim() !== "" ? (
-                  <img src={selectedArticle.featuredImage} alt="" className="w-full h-full object-cover opacity-90 transition-transform duration-1000 scale-105" crossOrigin="anonymous" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-[#0A2A43]/10" />
+              {/* Background Layer */}
+              <div className="absolute inset-0 overflow-hidden">
+                {selectedArticle?.featuredImage && (
+                  <img 
+                    src={selectedArticle.featuredImage} 
+                    alt="" 
+                    className={`w-full h-full object-cover transition-all duration-700 ${templateId === 'dramatic' ? 'scale-110' : 'scale-100 opacity-60'}`} 
+                    crossOrigin="anonymous" 
+                  />
+                )}
+                {/* Overlays */}
+                {templateId === 'modern' && <div className="absolute inset-0 bg-gradient-to-t from-[#0A2A43] via-transparent to-[#0A2A43]/40" />}
+                {templateId === 'dramatic' && <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />}
+                {templateId === 'editorial' && <div className="absolute inset-0 bg-white/10" />}
+              </div>
+
+              {/* Template: Modern */}
+              {templateId === 'modern' && (
+                <div className="relative z-10 flex flex-col h-full p-8">
+                  <div className="flex justify-between items-start">
+                    {settings?.logoUrl ? <img src={settings.logoUrl} className="h-10 filter brightness-0 invert" crossOrigin="anonymous" /> : <span className="font-black text-white text-xl">CBT</span>}
+                    <div className="bg-[#E63946] text-white text-[10px] font-black px-4 py-1.5 rounded-lg tracking-widest uppercase">DISPATCH</div>
                   </div>
-                )}
-                {/* Gradient Overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0A2A43] via-[#0A2A43]/60 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-b from-[#0A2A43]/30 to-transparent" />
-              </div>
-
-              {/* Header: Logo */}
-              <div className="relative z-10 p-8 flex justify-between items-start">
-                {settings?.logoUrl && settings.logoUrl.trim() !== "" ? (
-                  <img src={settings.logoUrl} alt="Logo" className="h-10 object-contain filter drop-shadow-2xl brightness-0 invert" crossOrigin="anonymous" />
-                ) : (
-                  <span className="font-black text-white text-xl tracking-tighter uppercase leading-none">COXBAZAR<br/><span className="text-[#1E90FF]">TIMES</span></span>
-                )}
-                <div className="bg-[#E63946] text-white text-[10px] font-black px-4 py-1.5 rounded-lg tracking-widest uppercase shadow-xl">
-                  LIVE NEWS
-                </div>
-              </div>
-
-              {/* Bottom Content */}
-              <div className="mt-auto relative z-10 p-8">
-                <div 
-                  className="w-16 h-1.5 mb-6 rounded-full" 
-                  style={{ backgroundColor: bgColor === '#1E90FF' ? 'white' : '#1E90FF' }} 
-                />
-                <h2 className="text-3xl font-black text-white leading-none mb-6 drop-shadow-2xl uppercase tracking-tighter line-clamp-3">
-                  {customHeadline || 'BROADCAST HEADLINE PREVIEW'}
-                </h2>
-                <div className="flex items-center justify-between border-t border-white/20 pt-6">
-                   <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">
-                    VERIFIED REPORT | {new Date().toLocaleDateString()}
-                  </span>
-                  <div className="flex gap-2">
-                    <Share2 className="w-4 h-4 text-white/40" />
+                  <div className="mt-auto">
+                    <h2 className="text-4xl font-black text-white leading-none uppercase tracking-tighter mb-6">{customHeadline || 'HEADLINE'}</h2>
+                    <div className="pt-6 border-t border-white/20 text-[9px] font-black text-white/60 uppercase tracking-widest flex justify-between">
+                      <span>{selectedArticle?.category}</span>
+                      <span>{new Date().toLocaleDateString()}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Diagonal accent */}
-              <div 
-                className="absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rotate-45 opacity-20 blur-xl"
-                style={{ backgroundColor: bgColor === '#0A2A43' ? '#1E90FF' : '#0A2A43' }}
-              />
+              {/* Template: Dramatic */}
+              {templateId === 'dramatic' && (
+                <div className="relative z-10 flex flex-col h-full items-center justify-center p-12 text-center">
+                  <div className="w-12 h-1 bg-[#1E90FF] mb-10" />
+                  <h2 className="text-4xl font-black text-white leading-[0.9] uppercase tracking-tighter mb-8 italic">{customHeadline || 'HEADLINE'}</h2>
+                  <div className="flex flex-col items-center gap-4">
+                     <div className="bg-[#E63946] text-white text-[10px] font-black px-6 py-2 tracking-[0.2em] rounded-full uppercase">Breaking Alert</div>
+                     <span className="text-[10px] font-black text-[#1E90FF] uppercase tracking-[0.3em]">COX BAZAR TIMES HQ</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Template: Editorial */}
+              {templateId === 'editorial' && (
+                <div className="relative z-10 flex flex-col h-full bg-white/95 m-6 rounded-xl border-t-[10px] border-[#0A2A43] overflow-hidden">
+                   <div className="p-8 border-b-4 border-[#0A2A43]/5 flex justify-between items-center">
+                      <span className="font-black text-[#0A2A43] text-lg tracking-tighter">THE GAZETTE</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-[#1E90FF]">{new Date().toLocaleDateString()}</span>
+                   </div>
+                   <div className="flex-1 p-8 flex flex-col items-center justify-center text-center">
+                      <h2 className="text-3xl font-black text-[#0A2A43] leading-tight uppercase tracking-tight mb-8 underline decoration-[#1E90FF] decoration-8 underline-offset-8">{customHeadline || 'HEADLINE'}</h2>
+                      <p className="text-xs font-bold text-[#0A2A43]/60 italic leading-relaxed">"Delivering the coastal perspective with unwavering authority and professional depth."</p>
+                   </div>
+                   <div className="bg-[#0A2A43] text-white p-4 text-center text-[8px] font-black tracking-widest uppercase">
+                      Cox Bazar Official Broadcast System
+                   </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

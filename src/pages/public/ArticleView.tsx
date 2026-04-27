@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs, doc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import { Helmet } from 'react-helmet-async';
 import { db } from '../../lib/firebase';
 import { NewsArticle } from '../../types';
 import { formatDate } from '../../lib/utils';
@@ -16,7 +17,8 @@ import {
   Calendar,
   User,
   ArrowRight,
-  Newspaper
+  Newspaper,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -30,6 +32,8 @@ export default function ArticleView() {
 
   useEffect(() => {
     if (!slug) return;
+
+    window.scrollTo(0, 0);
 
     const q = query(
       collection(db, 'news'),
@@ -74,7 +78,7 @@ export default function ArticleView() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    toast.success('Link copied to clipboard');
+    toast.success('Secure link generated and copied');
     setShowShareModal(false);
   };
 
@@ -88,19 +92,48 @@ export default function ArticleView() {
     window.open(url, '_blank');
   };
 
-  if (loading) return <div className="max-w-4xl mx-auto p-12 text-center text-[#0A2A43]/40 font-black uppercase tracking-[0.4em] animate-pulse py-40">Loading Broadcast...</div>;
+  const shareTW = () => {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(article?.title || '')}&url=${encodeURIComponent(window.location.href)}`;
+    window.open(url, '_blank');
+  };
+
+  if (loading) return (
+    <div className="max-w-4xl mx-auto space-y-12 py-24 px-4">
+      <div className="space-y-6">
+        <div className="h-10 bg-gray-100 rounded-full w-1/4 animate-pulse" />
+        <div className="h-20 bg-gray-100 rounded-2xl w-full animate-pulse" />
+        <div className="h-12 bg-gray-100 rounded-xl w-3/4 animate-pulse" />
+      </div>
+      <div className="aspect-video bg-gray-50 rounded-[40px] animate-pulse" />
+      <div className="space-y-4">
+        <div className="h-6 bg-gray-50 rounded-lg w-full animate-pulse" />
+        <div className="h-6 bg-gray-50 rounded-lg w-full animate-pulse" />
+        <div className="h-6 bg-gray-50 rounded-lg w-2/3 animate-pulse" />
+      </div>
+    </div>
+  );
+  
   if (!article) return (
     <div className="max-w-4xl mx-auto p-12 text-center py-40">
-      <h2 className="text-4xl font-black uppercase mb-4 tracking-tighter text-[#0A2A43]">ARTICLE NOT FOUND</h2>
-      <p className="text-[#0A2A43]/60 mb-8 font-medium">The story you are looking for has been archived or does not exist.</p>
-      <Link to="/" className="inline-flex items-center gap-3 bg-[#E63946] text-white px-8 py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-[#0A2A43] transition-all shadow-xl">
-        <ChevronLeft className="w-4 h-4" /> Return to Main Feed
+      <h2 className="text-4xl font-black uppercase mb-4 tracking-tighter text-[#0A2A43]">ARCHIVED OR MISSING</h2>
+      <p className="text-[#0A2A43]/60 mb-8 font-medium">The requested publication path does not exist in our current frequency.</p>
+      <Link to="/" className="inline-flex items-center gap-3 bg-[#1E90FF] text-white px-8 py-4 rounded-xl font-black uppercase text-xs tracking-widest hover:bg-[#0A2A43] transition-all shadow-xl">
+        <ChevronLeft className="w-4 h-4" /> Reset Frequency
       </Link>
     </div>
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-24">
+    <div className="max-w-4xl mx-auto space-y-12 pb-24 px-4 lg:px-0">
+      <Helmet>
+        <title>{article.title} | Cox Bazar Times</title>
+        <meta name="description" content={article.excerpt || article.title} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.excerpt} />
+        <meta property="og:image" content={article.featuredImage} />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
       {/* Back navigation */}
       <Link to="/" className="inline-flex items-center gap-3 text-[10px] font-black text-[#0A2A43]/50 uppercase tracking-[0.3em] hover:text-[#1E90FF] transition-all group">
          <div className="w-10 h-10 rounded-full border-2 border-gray-100 flex items-center justify-center group-hover:border-[#1E90FF] transition-colors">
